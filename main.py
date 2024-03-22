@@ -1,11 +1,13 @@
 import argparse
 import random
 import logging
+import os
+import json
 from tqdm import tqdm
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 import numpy as np
 from dataset.dino2_dataset import CustomDataset
@@ -81,19 +83,29 @@ def train(model, device, train_loader, optimizer, epoch, writer):
     
     logging.info(f'End of Epoch {epoch}, Average Loss: {total_loss / len(train_loader)}, Accuracy: {100. * correct / total}%')
 
+def print_config(config):
+    logging.info("Configuration of the running experiment:")
+    config_dict = vars(config)
+    logging.info(json.dumps(config_dict, indent=4, sort_keys=True))
 
 def main():
     parser = argparse.ArgumentParser(description='DREAMS Project - DinoV2 Training Script')
     parser.add_argument('--lr', type=float, default=0.01, help='learning rate (default: 0.01)')
-    parser.add_argument('--batch_size', type=int, default=4, help='batch size (default: 4)')
+    parser.add_argument('--batch_size', type=int, default=16, help='batch size (default: 4)')
     parser.add_argument('--epochs', type=int, default=10, help='batch size (default: 10)')
     parser.add_argument('--seed', type=int, default=1, help='batch size (default: 4)')
     parser.add_argument('--train_path', type=str, default="/storage/disk1/hossein/retina/train/train", help='path to the train dataset')
     parser.add_argument('--test_path', type=str, default="/storage/disk1/hossein/retina/train/test", help='path to the test dataset')
     parser.add_argument('--label_path', type=str, default="/storage/disk1/hossein/retina/train/trainLabels.csv", help='path to the labels dataset')
     # parser.add_argument('--model_name', type=str, default='DinoV2', help='model name')
-    parser.add_argument('--output-path', type=str, default='/home/hossein/results_dream', help='path for saving trained models')
+    parser.add_argument('--output_path', type=str, default='/home/hossein/results_dream', help='path for saving trained models')
     args = parser.parse_args()
+   
+    args.output_path = os.path.join(args.output_path, str(args.lr))
+    try:
+        os.makedirs(args.output_path)
+    except OSError:
+        logging.info("Creation of the directory %s failed" % args.output_path)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     set_seed(args.seed) 
@@ -101,7 +113,7 @@ def main():
     
     # Configure logging to write to a file and also to stderr
     logger = logging.getLogger()
-    logger.setLevel(logging.INFO)  # Set the logging level
+    logger.setLevel(logging.INFO) 
 
     # Format for our loglines
     formatter = logging.Formatter('%(asctime)s %(levelname)s [%(filename)s:%(lineno)d] - %(message)s',
@@ -116,6 +128,8 @@ def main():
     stream_handler = logging.StreamHandler()
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
+    
+    print_config(args) # Set the logging level
     
     # Initialize datasets
     train_dataset = CustomDataset(args.train_path, args.label_path)  # Add appropriate arguments for your dataset class
@@ -137,14 +151,14 @@ def main():
     for epoch in range(1, args.epochs+1):  # 10 epochs for example
         train(model, device, train_loader, optimizer, epoch, writer=writer)
         # Add validation/testing here
+        
+    # Save the model
+    torch.save(model.state_dict(), f"{args.output_path}/{args.model_name}.pth")
 
     # Evaluate the model on the test set
     evaluate(model, device, test_loader, writer=writer, epoch=epoch)
 
     writer.close()
-    
-    # Save the model
-    torch.save(model.state_dict(), f"{args.output_path}/{args.model_name}.pth")
 
 if __name__ == '__main__':
     main()
