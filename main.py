@@ -30,8 +30,10 @@ def evaluate(model, device, test_loader, writer, epoch):
     true_labels = []
     predictions = []
     
+    progress_bar = tqdm(test_loader, total=len(test_loader), desc=f'Epoch {epoch}')
+    
     with torch.no_grad():
-        for data, target in test_loader:
+        for (data, target) in progress_bar:
             data, target = data.to(device), target.to(device)
             output = model(data)
             pred = output.argmax(dim=1, keepdim=True)
@@ -97,7 +99,7 @@ def main():
     parser.add_argument('--train_path', type=str, default="/storage/disk1/hossein/retina/train/train", help='path to the train dataset')
     parser.add_argument('--test_path', type=str, default="/storage/disk1/hossein/retina/train/test", help='path to the test dataset')
     parser.add_argument('--label_path', type=str, default="/storage/disk1/hossein/retina/train/trainLabels.csv", help='path to the labels dataset')
-    # parser.add_argument('--model_name', type=str, default='DinoV2', help='model name')
+    parser.add_argument('--model_name', type=str, default='DinoV2', help='model name')
     parser.add_argument('--output_path', type=str, default='/home/hossein/results_dream', help='path for saving trained models')
     args = parser.parse_args()
    
@@ -150,13 +152,14 @@ def main():
     # Training loop
     for epoch in range(1, args.epochs+1):  # 10 epochs for example
         train(model, device, train_loader, optimizer, epoch, writer=writer)
+        evaluate(model, device, test_loader, writer=writer, epoch=epoch)
         # Add validation/testing here
-        
+    
     # Save the model
     torch.save(model.state_dict(), f"{args.output_path}/{args.model_name}.pth")
 
     # Evaluate the model on the test set
-    evaluate(model, device, test_loader, writer=writer, epoch=epoch)
+    # evaluate(model, device, test_loader, writer=writer, epoch=args.epochs)
 
     writer.close()
 
