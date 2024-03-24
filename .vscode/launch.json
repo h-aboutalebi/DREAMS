@@ -12,7 +12,7 @@
             "console": "integratedTerminal",
             "args": [
                 "--epochs",
-                "0",
+                "1",
                 "--output_path",
                 "/home/hossein/results_dream/tmp"
             ]
