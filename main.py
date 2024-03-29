@@ -121,7 +121,7 @@ def main():
                         help='learning rate (default: 0.01)')
     parser.add_argument('--batch_size', type=int, default=16,
                         help='batch size (default: 4)')
-    parser.add_argument('--epochs', type=int, default=10,
+    parser.add_argument('--epochs', type=int, default=20,
                         help='batch size (default: 10)')
     parser.add_argument('--seed', type=int, default=1,
                         help='batch size (default: 4)')
@@ -134,7 +134,7 @@ def main():
     parser.add_argument('--model_name', type=str,
                         default='DinoV2', help='model name')
     parser.add_argument('--output_path', type=str,
-                        default='/home/hossein/results_dream/main', help='path for saving trained models')
+                        default='/home/hossein/results_dream', help='path for saving trained models')
     parser.add_argument('--model_path', type=str,
                         default='/home/hossein/results_dream/main/5e-06/DinoV2_best.pth', help='path for loading model')
     parser.add_argument('--load_model', action='store_true', help="Load the pre-trained model.")
@@ -186,7 +186,7 @@ def main():
         test_dataset, batch_size=args.batch_size, shuffle=False)
 
     # Initialize the model
-    model = DinoV2(load_attention=True).to(device)
+    model = DinoV2().to(device)
     if args.load_model:
         model.load_state_dict(torch.load(args.model_path))
         logging.info(f"Model loaded from {args.model_path}")

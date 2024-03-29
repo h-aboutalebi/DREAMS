@@ -168,6 +168,20 @@ class DinoVisionTransformer(nn.Module):
         self.mask_token = nn.Parameter(torch.zeros(1, embed_dim))
 
         self.init_weights()
+        
+    # added by Hossein
+    def get_last_self_attention(self, x, masks=None):
+        if isinstance(x, list):
+            return self.forward_features_list(x, masks)
+            
+        x = self.prepare_tokens_with_masks(x, masks)
+        
+        # Run through model, at the last block just return the attention.
+        for i, blk in enumerate(self.blocks):
+            if i < len(self.blocks) - 1:
+                x = blk(x)
+            else: 
+                return blk(x, return_attention=True)
 
     def init_weights(self):
         trunc_normal_(self.pos_embed, std=0.02)
