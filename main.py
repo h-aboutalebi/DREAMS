@@ -13,7 +13,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from torch.utils.data import DataLoader, random_split
-from sklearn.metrics import accuracy_score, precision_recall_fscore_support
+from sklearn.metrics import accuracy_score, recall_score, f1_score, precision_score
 import numpy as np
 from dataset.dino2_dataset import CustomDataset
 from models.dino_v2 import DinoV2
@@ -34,7 +34,7 @@ def evaluate(model, device, test_loader, writer, epoch):
     true_labels = []
     predictions = []
     progress_bar = tqdm(test_loader, total=len(
-        test_loader), desc=f'Epoch {epoch}')
+        test_loader), desc=f'Testing for Epoch {epoch}')
 
     with torch.no_grad():
         for (data, target) in progress_bar:
@@ -44,8 +44,12 @@ def evaluate(model, device, test_loader, writer, epoch):
             predictions.extend(pred.view_as(target).cpu().numpy())
             true_labels.extend(target.cpu().numpy())
 
-    accuracy, precision, recall, f1 = precision_recall_fscore_support(
-        true_labels, predictions, average='macro')
+    # Logic to use average micro check this: 
+    # https://datascience.stackexchange.com/questions/15989/micro-average-vs-macro-average-performance-in-a-multiclass-classification-settin
+    f1 = f1_score(true_labels, predictions, average='micro')
+    accuracy = accuracy_score(true_labels, predictions)
+    recall = recall_score(true_labels, predictions, average="micro")
+    precision = precision_score(true_labels, predictions, average="micro") 
     
     if f1 is None:
         f1 = 0
@@ -76,7 +80,7 @@ def train(model, device, train_loader, optimizer, epoch, writer):
     normalizer = torch.nn.Softmax(dim=-1) 
     # Wrap `train_loader` with `tqdm` for a progress bar
     progress_bar = tqdm(enumerate(train_loader), total=len(
-        train_loader), desc=f'Epoch {epoch}')
+        train_loader), desc=f'Training for Epoch {epoch}')
     focal_loss = FocalLoss(gamma=0.7) #increase gamma to focus nore on hard examples
 
     for batch_idx, (data, target) in progress_bar:
@@ -132,7 +136,10 @@ def main():
     parser.add_argument('--model_name', type=str,
                         default='DinoV2', help='model name')
     parser.add_argument('--output_path', type=str,
-                        default='/home/hossein/results_dream', help='path for saving trained models')
+                        default='/home/hossein/results_dream/main', help='path for saving trained models')
+    parser.add_argument('--model_path', type=str,
+                        default='/home/hossein/results_dream/main/5e-06/DinoV2_best.pth', help='path for loading model')
+    parser.add_argument('--load_model', action='store_true', help="Load the pre-trained model.")
     args = parser.parse_args()
 
     args.output_path = os.path.join(args.output_path, str(args.lr))
@@ -182,6 +189,9 @@ def main():
 
     # Initialize the model
     model = DinoV2().to(device)
+    if args.load_model:
+        model.load_state_dict(torch.load(args.model_path))
+        logging.info(f"Model loaded from {args.model_path}")
 
     # Initialize the optimizer
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
@@ -197,8 +207,9 @@ def main():
             best_accuracy = accuracy
             torch.save(model.state_dict(), f"{args.output_path}/{args.model_name}_best.pth")
     
-    # Load the best model
-    model.load_state_dict(torch.load(f"{args.output_path}/{args.model_name}_best.pth"))
+    if args.epochs!=0:
+        # Load the best model
+        model.load_state_dict(torch.load(f"{args.output_path}/{args.model_name}_best.pth"))
     
     # Evaluate the model on the test set
     evaluate(model, device, test_loader, writer=writer, epoch=args.epochs)

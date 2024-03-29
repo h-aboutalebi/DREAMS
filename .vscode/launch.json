@@ -12,10 +12,16 @@
             "console": "integratedTerminal",
             "args": [
                 "--epochs",
-                "1",
+                "0",
                 "--output_path",
-                "/home/hossein/results_dream/tmp"
-            ]
+                "/home/hossein/results_dream/tmp",
+                "--load_model",
+                "--model_path",
+                "/home/hossein/results_dream/main/5e-06/DinoV2_best.pth"
+            ],
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "3" // Specify the GPU IDs here. Use comma for multiple GPUs, e.g., "0,1".
+            },
         }
     ]
 }
