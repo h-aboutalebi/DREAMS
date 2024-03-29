@@ -186,7 +186,7 @@ def main():
         test_dataset, batch_size=args.batch_size, shuffle=False)
 
     # Initialize the model
-    model = DinoV2().to(device)
+    model = DinoV2(load_attention=True).to(device)
     if args.load_model:
         model.load_state_dict(torch.load(args.model_path))
         logging.info(f"Model loaded from {args.model_path}")
