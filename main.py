@@ -12,7 +12,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim.lr_scheduler import CosineAnnealingLR
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score, recall_score, f1_score, precision_score
 import numpy as np
 from dataset.dino2_dataset import CustomDataset
@@ -51,14 +51,12 @@ def evaluate(model, device, test_loader, writer, epoch):
     recall = recall_score(true_labels, predictions, average="micro")
     precision = precision_score(true_labels, predictions, average="micro") 
     
-    if f1 is None:
-        f1 = 0
-    if recall is None:
-        recall = 0
-    if precision is None:
-        precision = 0
-    if accuracy is None:
-        accuracy = 0
+    # avoid None values
+    f1 = f1 or 0
+    recall = recall or 0
+    precision = precision or 0
+    accuracy = accuracy or 0
+    
     logging.info(f'\nTest set: Accuracy: {accuracy:.4f}, Precision: {
                  precision:.4f}, Recall: {recall:.4f}, F1: {f1:.4f}\n')
     
