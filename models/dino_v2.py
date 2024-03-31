@@ -16,6 +16,9 @@ class DinoV2(torch.nn.Module):
             nn.ReLU(),
             nn.Linear(256, 5) # 5 classes
         )
+        
+    def get_last_self_attention(self, x, masks=None):
+        return self.transformer.get_last_self_attention(x, masks)
 
     def forward(self, x):
         x_dino = self.transformer(x)

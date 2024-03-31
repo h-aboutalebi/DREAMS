@@ -20,7 +20,21 @@
                 "/home/hossein/results_dream/main/5e-06/DinoV2_best.pth"
             ],
             "env": {
-                "CUDA_VISIBLE_DEVICES": "3" // Specify the GPU IDs here. Use comma for multiple GPUs, e.g., "0,1".
+                "CUDA_VISIBLE_DEVICES": "0" // Specify the GPU IDs here. Use comma for multiple GPUs, e.g., "0,1".
+            },
+        },
+        {
+            "name": "vis_attention.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "/home/hossein/github/DREAMS/visualize_attention.py",
+            "console": "integratedTerminal",
+            "args": [
+                // "--image_path", 
+                // "/storage/disk1/hossein/retina/train/test/35209_left.jpeg"
+            ],
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "0" // Specify the GPU IDs here. Use comma for multiple GPUs, e.g., "0,1".
             },
         }
     ]
